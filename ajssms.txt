@@ -1,0 +1,397 @@
+----data-form.component.html----
+
+<div>
+    <h2>ADD</h2>
+    <h2>{{ isEditMode ? 'Edit Data' : 'Add Data' }}</h2>
+    <form (ngSubmit) = "saveData()">
+    <div>
+        <label for = "rollno">Roll No:</label><br>
+        <input type = "text" id = "rollno" [(ngModel)] = "data.rollno" name = "roll.no" required>
+    </div>
+    <br>
+    <div>
+        <label for = "name">Name :</label><br>
+        <input type = "text" id = "name" [(ngModel)] = "data.name" name = "name" required>
+    </div>
+    <br>
+    <div>
+        <label for = "class1">Class :</label><br>
+        <input type = "text" id = "class1" [(ngModel)] = "data.class1" name = "class1" required>
+    </div><br>
+    <button type = "submit">{{isEditMode ? 'Update' : 'Add'}}</button>
+</form>
+</div>
+
+----data-form.component.ts----
+
+import { Component, OnInit } from '@angular/core';
+import { DataService} from '../data.service';
+import { Router } from '@angular/router';
+
+interface Data{
+  id: number;
+  rollno : number;
+  name : string;
+  class1 : string;
+}
+
+@Component({
+  selector: 'app-data-list',
+  templateUrl: './data-list.component.html',
+  styleUrl: './data-list.component.css'
+})
+export class DataListComponent implements OnInit {
+  dataList: Data[] = [];
+
+  constructor(private dataService : DataService, private router: Router) {}
+
+  ngOnInit(): void {
+    this.dataService.getAllData().subscribe(data =>{
+      this.dataList = data;
+  });
+  this.dataList = [
+    {id : 1, rollno : 200141, name : 'Dhoni', class1 : 'A'},
+    {id : 2, rollno : 200142, name : 'Virat', class1 : 'A'},
+    {id : 3, rollno : 200143, name : 'Balu', class1 : 'C'}
+  ]
+  }
+
+  deleteData(id : number) : void {
+    this.dataService.deleteData(id).subscribe(()=>{
+      this.dataList = this.dataList.filter(data => data.id !== id)
+    })
+  }
+
+  editData(id: number): void {
+    this.router.navigate(['/data/edit', id]);
+  }
+
+}
+
+----data-list.component.html----
+
+<div>
+    <h2>Data List</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Roll No</th>
+                <th>Name</th>
+                <th>Class</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor = "let data of dataList">
+                <td>{{data.id}}</td>
+                <td>{{data.rollno}}</td>
+                <td>{{data.name}}</td>
+                <td>{{data.class1}}</td>
+                <td>
+                    <button (click)="editData(data.id)">Edit</button>
+                    <button (click)="deleteData(data.id)">Delete</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+----data-list.component.ts----
+
+import { Component, OnInit } from '@angular/core';
+import { DataService} from '../data.service';
+import { Router } from '@angular/router';
+
+interface Data{
+  id: number;
+  rollno : number;
+  name : string;
+  class1 : string;
+}
+
+@Component({
+  selector: 'app-data-list',
+  templateUrl: './data-list.component.html',
+  styleUrl: './data-list.component.css'
+})
+export class DataListComponent implements OnInit {
+  dataList: Data[] = [];
+
+  constructor(private dataService : DataService, private router: Router) {}
+
+  ngOnInit(): void {
+    this.dataService.getAllData().subscribe(data =>{
+      this.dataList = data;
+  });
+  this.dataList = [
+    {id : 1, rollno : 200141, name : 'Dhoni', class1 : 'A'},
+    {id : 2, rollno : 200142, name : 'Virat', class1 : 'A'},
+    {id : 3, rollno : 200143, name : 'Balu', class1 : 'C'}
+  ]
+  }
+
+  deleteData(id : number) : void {
+    this.dataService.deleteData(id).subscribe(()=>{
+      this.dataList = this.dataList.filter(data => data.id !== id)
+    })
+  }
+
+  editData(id: number): void {
+    this.router.navigate(['/data/edit', id]);
+  }
+
+}
+
+----app-routing.module.ts----
+
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { DataListComponent } from './data-list/data-list.component';
+import { DataFormComponent } from './data-form/data-form.component';
+
+const routes: Routes = [
+  {path : 'data', component : DataListComponent},
+  {path : 'data/add',component : DataFormComponent},
+  {path : 'data/edit/:id', component : DataFormComponent},
+  {path : '', redirectTo: '/data', pathMatch : 'full'},
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+
+----data.service.ts----
+
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class DataService {
+  private apiUrl = 'link';
+
+  constructor(private http: HttpClient) { }
+
+  getAllData(): Observable<any[]> {
+    return this.http.get<any[]>(this.apiUrl);
+  }
+
+  getDataById(id: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${id}`);
+  }
+
+  addData(data: any): Observable<any> {
+    return this.http.post<any>(this.apiUrl, data);
+  }
+
+  updateData(id: number, data: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${id}`, data);
+  }
+
+  deleteData(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+}
+
+----java----
+
+package simplehttpserver;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class SimpleHttpServer {
+
+    public static void main(String[] args) throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
+        server.createContext("/students", new StudentHandler());
+        server.setExecutor(null); // creates a default executor
+        server.start();
+        System.out.println("Server is listening on port 8000");
+    }
+
+    static class StudentHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (exchange.getRequestMethod().equalsIgnoreCase("GET")) {
+                handleGetRequest(exchange);
+            } else if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
+                handlePostRequest(exchange);
+            } else if (exchange.getRequestMethod().equalsIgnoreCase("PUT")) {
+                handlePutRequest(exchange);
+            } else if (exchange.getRequestMethod().equalsIgnoreCase("DELETE")) {
+                handleDeleteRequest(exchange);
+            } else {
+                exchange.sendResponseHeaders(405, -1); // Method Not Allowed
+            }
+        }
+
+        private void handleGetRequest(HttpExchange exchange) throws IOException {
+            try {
+                List<String> response = new ArrayList<>();
+                Connection conn = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=mydatabase", "root", "password");
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT * FROM students");
+                while (rs.next()) {
+                    response.add(rs.getString("id") + ", " + rs.getString("name") + ", " + rs.getString("class"));
+                }
+                rs.close();
+                stmt.close();
+                conn.close();
+
+                String responseBody = String.join("\n", response);
+                exchange.sendResponseHeaders(200, responseBody.length());
+                OutputStream os = exchange.getResponseBody();
+                os.write(responseBody.getBytes());
+                os.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                exchange.sendResponseHeaders(500, -1); // Internal Server Error
+            }
+        }
+
+        private void handlePostRequest(HttpExchange exchange) throws IOException {
+            try {
+                InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), "utf-8");
+                BufferedReader br = new BufferedReader(isr);
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line);
+                }
+                br.close();
+                isr.close();
+
+                String requestBody = sb.toString();
+                String[] parts = requestBody.split(",");
+
+                String name = parts[0].trim();
+                String studentClass = parts[1].trim();
+
+                Connection conn = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=mydatabase", "root", "password");
+                PreparedStatement pstmt = conn.prepareStatement("INSERT INTO students (name, class) VALUES (?, ?)");
+                pstmt.setString(1, name);
+                pstmt.setString(2, studentClass);
+                pstmt.executeUpdate();
+                pstmt.close();
+                conn.close();
+
+                exchange.sendResponseHeaders(201, -1); // Created
+            } catch (SQLException e) {
+                e.printStackTrace();
+                exchange.sendResponseHeaders(500, -1); // Internal Server Error
+            }
+        }
+
+        private void handlePutRequest(HttpExchange exchange) throws IOException {
+            try {
+                InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), "utf-8");
+                BufferedReader br = new BufferedReader(isr);
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line);
+                }
+                br.close();
+                isr.close();
+
+                String requestBody = sb.toString();
+                String[] parts = requestBody.split(",");
+
+                // Assuming requestBody is formatted as "id,name,class"
+                int id = Integer.parseInt(parts[0].trim());
+                String name = parts[1].trim();
+                String studentClass = parts[2].trim();
+
+                // Update the corresponding record in the database
+                Connection conn = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=mydatabase", "root", "password");
+                PreparedStatement pstmt = conn.prepareStatement("UPDATE students SET name = ?, class = ? WHERE id = ?");
+                pstmt.setString(1, name);
+                pstmt.setString(2, studentClass);
+                pstmt.setInt(3, id);
+                pstmt.executeUpdate();
+                pstmt.close();
+                conn.close();
+
+                exchange.sendResponseHeaders(204, -1); // No Content
+            } catch (SQLException e) {
+                e.printStackTrace();
+                exchange.sendResponseHeaders(500, -1); // Internal Server Error
+            }
+        }
+
+        private void handleDeleteRequest(HttpExchange exchange) throws IOException {
+            try {
+                InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), "utf-8");
+                BufferedReader br = new BufferedReader(isr);
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line);
+                }
+                br.close();
+                isr.close();
+
+                String requestBody = sb.toString();
+                int id = Integer.parseInt(requestBody.trim());
+
+                // Delete the corresponding record from the database
+                Connection conn = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=mydatabase", "root", "password");
+                PreparedStatement pstmt = conn.prepareStatement("DELETE FROM students WHERE id = ?");
+                pstmt.setInt(1, id);
+                pstmt.executeUpdate();
+                pstmt.close();
+                conn.close();
+
+                exchange.sendResponseHeaders(204, -1); // No Content
+            } catch (SQLException e) {
+                e.printStackTrace();
+                exchange.sendResponseHeaders(500, -1); // Internal Server Error
+            }
+        }
+    }
+
+    static class Student {
+        private int id;
+        private String name;
+        private String studentClass;
+
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getStudentClass() {
+            return studentClass;
+        }
+
+        public void setStudentClass(String studentClass) {
+            this.studentClass = studentClass;
+        }
+    }
+}
+
+
